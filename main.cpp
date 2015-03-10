@@ -12,6 +12,11 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
+	if (std::ifstream(argv[1]).good()) {
+		std::cerr << "Output file exists." << std::endl;
+		return -3;
+	}
+
 	try {
 		jpicht::UsbScope scope;
 		jpicht::ScalePtr scale = jpicht::Scale::findScale(scope);
