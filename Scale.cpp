@@ -6,7 +6,7 @@
 
 namespace jpicht {
 Scale::Scale(UsbDevicePtr scaleDevice_)
-: scaleDevice(scaleDevice_)
+: scaleDevice(std::move(scaleDevice_))
 , claim(scaleDevice.get(), 0)
 {
 	Buffer<char> buffer(8);

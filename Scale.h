@@ -8,7 +8,7 @@
 namespace jpicht
 {
 	class Scale;
-	typedef std::auto_ptr<Scale> ScalePtr;
+	typedef std::unique_ptr<Scale> ScalePtr;
 
 	class Scale
 	{

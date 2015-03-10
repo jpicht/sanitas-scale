@@ -9,7 +9,7 @@
 namespace jpicht
 {
 	class UsbDevice;
-	typedef std::auto_ptr<UsbDevice> UsbDevicePtr;
+	typedef std::unique_ptr<UsbDevice> UsbDevicePtr;
 
 	class UsbDevice
 	{
