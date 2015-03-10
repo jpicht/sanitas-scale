@@ -25,3 +25,8 @@ To run it:
 ```
 sudo ./scale outputfile.bin
 ```
+
+Links
+-----
+- http://www.sanitas-online.de/web/de/produkte/gewicht/SBF48.php
+- http://www.sanitas-online.de/web/_dokumente/GAs/gewicht/750.882-0313_SBF48.pdf
