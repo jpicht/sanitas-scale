@@ -6,7 +6,7 @@ scale: ${OBJECTS}
 Scale.o: InterfaceClaim.h UsbDevice.h Scale.h
 
 .cpp.o:
-	g++ -c -o $@ $<
+	g++ -std=gnu++0x -c -o $@ $<
 
 clean:
 	rm *~ *.o scale

@@ -1,4 +1,5 @@
 #include "UsbDevice.h"
+#include "Buffer.h"
 
 #include <usb.h>
 #include <stdexcept>
@@ -47,7 +48,7 @@ int UsbDevice::controlMsg(unsigned char request, unsigned char rType, unsigned i
 
 bool UsbDevice::interruptRead(int endpoint, std::vector<unsigned char> &buffer, size_t length, int timeout)
 {
-	std::auto_ptr<char> localBuffer(new char(length));
+	Buffer<char> localBuffer(length);
 	int actuallyRead = usb_interrupt_read(handle, endpoint, localBuffer.get(), length, timeout);
 
 	if (actuallyRead == length) {

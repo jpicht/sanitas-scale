@@ -1,4 +1,5 @@
 #include "Scale.h"
+#include "Buffer.h"
 
 #include <stdexcept>
 #include <iostream>
@@ -8,7 +9,7 @@ Scale::Scale(UsbDevicePtr scaleDevice_)
 : scaleDevice(scaleDevice_)
 , claim(scaleDevice.get(), 0)
 {
-	std::auto_ptr<char> buffer(new char[8]);
+	Buffer<char> buffer(8);
 	buffer.get()[0] = 0x10;
 
 	if (0 != scaleDevice->controlMsg(0x21, 0x0a, 0x0000, 0, 0, 0, 1000)) {
