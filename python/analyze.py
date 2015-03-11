@@ -73,6 +73,11 @@ class meta1(object):
 		offset = person * meta1.OFFSET_PERSON + meta1.OFFSET_DOB
 		return  (ord(self.buffer[offset]) << 8) | ord(self.buffer[offset + 1])
 
+	def getActive(self, person = 0):
+		if self.getHeight(person) > 0:
+			return True
+		return False
+
 	def getDob(self, person = 0):
 		return formatDate(parseDate(self.read16(person, meta1.OFFSET_DOB)))
 
@@ -112,38 +117,42 @@ class personData(object):
 			self.muscle.getf(idx),
 		)
 
-def analyze(fN):
-	"""Parser function for one file"""
-	if os.lstat(fN).st_size != 8192:
-		print fN + ": Unknown file size!"
-		return
+class analyze(object):
+	def __init__(self, fN):
+		"""Parser function for one file"""
+		if os.lstat(fN).st_size != 8192:
+			print fN + ": Unknown file size!"
+			return
 
-	f = file(fN)
-	data = []
-	for p in range(10):
-		data.append(readPerson(f))
+		f = file(fN)
+		data = []
+		for p in range(10):
+			data.append(readPerson(f))
 
-	# the next two blocks seem to be unused
-	skipA = f.read(BLOCK_SIZE)
-	skipB = f.read(BLOCK_SIZE)
+		# the next two blocks seem to be unused
+		skipA = f.read(BLOCK_SIZE)
+		skipB = f.read(BLOCK_SIZE)
+		metaA = f.read(BLOCK_SIZE)
+		metaB = f.read(BLOCK_SIZE)
 
-	metaA = f.read(BLOCK_SIZE)
-	metaB = f.read(BLOCK_SIZE)
+		self.meta1 = meta1(metaA)
+		self.data = [personData(x) for x in data]
 
-	m = meta1(metaA)
-	print "Person 0"
-	print "--------"
-	print "DOB:     %s" % m.getDob()
-	print "Height:  %d cm" % m.getHeight()
-	print "Counter: %d measurements" % m.getCount()
-	print
+	def dump(self):
+		for p in range(10):
+			if not self.meta1.getActive(p):
+				continue
+			print "Person %d" % p
+			print "--------"
+			print "DOB:     %s" % self.meta1.getDob(p)
+			print "Height:  %d cm" % self.meta1.getHeight(p)
+			print "Counter: %d measurements" % self.meta1.getCount(p)
+			print
 
-	d = personData(data[0])
-	for i in range(m.getCount()):
-		print " ".join( d.getf(i) )
-
+			for i in range(self.meta1.getCount()):
+				print " ".join( self.data[p].getf(i) )
 
 if __name__ == "__main__":
 	for f in sys.argv[1:]:
-		analyze(f)
+		analyze(f).dump()
 
