@@ -2,50 +2,10 @@
 
 import sys, os
 
-# the file constists of 64 blocks with 128 bytes each
-#
-#  #    description  bytes  interpretation
-#  0: P0 weight          2           100 g
-#  1: P0 % body fat      2            .1 %
-#  2: P0 % water         2            .1 %
-#  3: P0 % muscle        2            .1 %
-#  4: P0 date            2               ?
-#  5: P0 time            2  [hour, minute]
-#
-#  6: P1?
-#  7: P1?
-#  8: P1?
-#  9: P1?
-# 10: P1?
-# 11: P1?
-#
-# ...
-#
-# 54: P9?
-# 55: P9?
-# 56: P9?
-# 57: P9?
-# 58: P9?
-# 59: P9?
-# 60: ??
-# 61: ??
-# 62: META1
-# 63: META2
-#
-# date format:
-#   bit  : f e d c b a 9 8 7 6 5 4 3 2 1 0
-#   value: 1 0 1 1 1 1 0 0 0 1 1 0 1 0 0 1
-#         |-------------|-------|--------|
-#          year-1921(?)  month    day
-#
-# META1:
-# 62.00: ??
-# 62.01: height
-# 62.05: counter
-
 BLOCK_SIZE=128
 
 def readPerson(f):
+	"""Read all data for one profile from a file like object."""
 	return {
 		'weight': f.read(BLOCK_SIZE),
 		'body_fat': f.read(BLOCK_SIZE),
@@ -55,14 +15,14 @@ def readPerson(f):
 		'time': f.read(BLOCK_SIZE)
 	}
 
-def dumpHex(buff, lineWidth = 16):
-	for idx in range(len(buff)):
-		if idx > 0 and idx % lineWidth == 0:
-			print
-		print "%02x" % ord(buff[idx]),
-	print
+def parseDate(raw):
+	return ( 1920 + (raw >> 9), (raw >> 5) & 15, raw & 31 )
+
+def formatDate(d):
+	return "{2:02d}.{1:02d}.{0:04d}".format( *d )
 
 class p16(object):
+	"""Parser for 16 bit data blocks"""
 	def __init__(self, buffer, suffix=""):
 		self.buffer = buffer
 		self.suffix = suffix
@@ -74,6 +34,7 @@ class p16(object):
 		return "{0:5d}".format(self.get(num)) + self.suffix
 
 class p16time(p16):
+	"""Parser for the 16 bit time format"""
 	def get(self, num):
 		return ord(self.buffer[num*2]), ord(self.buffer[num*2+1])
 
@@ -81,14 +42,16 @@ class p16time(p16):
 		return "{0:02d}:{1:02d}".format( *self.get(num) ) + self.suffix
 
 class p16date(p16):
+	"""Parser for the 16 bit date format"""
 	def get(self, num):
 		raw = p16.get(self, num)
-		return ( 1921 + (raw >> 9), (raw >> 5) & 15, raw & 31 )
+		return parseDate(raw)
 
 	def getf(self, num):
-		return "{2:02d}.{1:02d}.{0:04d}".format( *self.get(num) ) + self.suffix
+		return formatDate(self.get(num)) + self.suffix
 
 class p16p1(p16):
+	"""Parser for the weight block"""
 	def get(self, num):
 		return p16.get(self, num) / 10.
 
@@ -97,13 +60,21 @@ class p16p1(p16):
 		
 
 class meta1(object):
-	OFFSET_HEIGHT  = 1
+	"""Parser for the meta data block 1"""
+	OFFSET_DOB     = 2
 	OFFSET_COUNTER = 5
-
+	OFFSET_HEIGHT  = 1
 	OFFSET_PERSON  = 8
 
 	def __init__(self, buffer):
 		self.buffer = buffer
+
+	def read16(self, person, offset):
+		offset = person * meta1.OFFSET_PERSON + meta1.OFFSET_DOB
+		return  (ord(self.buffer[offset]) << 8) | ord(self.buffer[offset + 1])
+
+	def getDob(self, person = 0):
+		return formatDate(parseDate(self.read16(person, meta1.OFFSET_DOB)))
 
 	def getHeight(self, person = 0):
 		return ord(self.buffer[person * meta1.OFFSET_PERSON + meta1.OFFSET_HEIGHT])
@@ -112,6 +83,7 @@ class meta1(object):
 		return ord(self.buffer[person * meta1.OFFSET_PERSON + meta1.OFFSET_COUNTER])
 
 class personData(object):
+	"""Encapsulation for the decoded data of one profile"""
 	def __init__(self, data):
 		self.weight   = p16p1(data['weight'], " kg")
 		self.fat      = p16p1(data['body_fat'], "% fat")
@@ -141,6 +113,7 @@ class personData(object):
 		)
 
 def analyze(fN):
+	"""Parser function for one file"""
 	if os.lstat(fN).st_size != 8192:
 		print fN + ": Unknown file size!"
 		return
@@ -160,20 +133,15 @@ def analyze(fN):
 	m = meta1(metaA)
 	print "Person 0"
 	print "--------"
-	print "Height:  %3d cm" % m.getHeight()
-	print "Counter: %3d measurements" % m.getCount()
+	print "DOB:     %s" % m.getDob()
+	print "Height:  %d cm" % m.getHeight()
+	print "Counter: %d measurements" % m.getCount()
 	print
-
-	w = p16p1(data[0]['weight'])
-	for i in range(m.getCount()):
-		print "Weight %2d: %.1f kg" % (i, w.get(i))
 
 	d = personData(data[0])
 	for i in range(m.getCount()):
 		print " ".join( d.getf(i) )
 
-	# dumpHex(metaA)
-	# dumpHex(metaB)
 
 if __name__ == "__main__":
 	for f in sys.argv[1:]:
