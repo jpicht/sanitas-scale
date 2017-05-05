@@ -4,7 +4,7 @@ from analyze import analyze, formatDate
 import sys
 
 def formatLine(person, date, time, weight, fat, water, muscle):
-	return ";".join([str(x) for x in (person, formatDate(date) + " {0:02d}:{0:02d}".format(*time), weight, fat, water, muscle)])
+	return ";".join([str(x) for x in (person, formatDate(date) + " {0:02d}:{1:02d}".format(*time), weight, fat, water, muscle)])
 
 def main():
 	if len(sys.argv) != 2:
