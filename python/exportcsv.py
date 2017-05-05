@@ -16,7 +16,7 @@ def main():
 		if not a.meta1.getActive(p):
 			continue
 
-		for i in range(a.meta1.getCount()):
+		for i in range(a.meta1.getCount(p)):
 			print formatLine(p, *a.data[p].get(i))
 
 if __name__ == "__main__":

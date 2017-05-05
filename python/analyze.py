@@ -149,7 +149,7 @@ class analyze(object):
 			print "Counter: %d measurements" % self.meta1.getCount(p)
 			print
 
-			for i in range(self.meta1.getCount()):
+			for i in range(self.meta1.getCount(p)):
 				print " ".join( self.data[p].getf(i) )
 
 if __name__ == "__main__":
